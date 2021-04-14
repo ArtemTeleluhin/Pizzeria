@@ -8,7 +8,7 @@ class Dishes(SqlAlchemyBase):
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
-    name = sqlalchemy.Column(sqlalchemy.String)
+    name = sqlalchemy.Column(sqlalchemy.String, unique=True)
     add_info = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     category_id = sqlalchemy.Column(sqlalchemy.Integer,
                                     sqlalchemy.ForeignKey("categories.id"))

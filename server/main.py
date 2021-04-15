@@ -1,8 +1,10 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from server.data import db_session
 from server.data.categories import Categories
 from server.data.dishes import Dishes
 from server.data.versions import Versions
+from server.data.orders import Orders
+from server.data.versions_to_orders import VersionsToOrders
 
 DB_NAME = 'pizzeria_base'
 
@@ -33,6 +35,38 @@ def menu():
         if not menu[category.name]:
             menu.pop(category.name)
     return jsonify(menu)
+
+
+@app.route('/make_order', methods=['POST'])
+def make_order():
+    if not request.json:
+        return jsonify({'error': 'Empty request'})
+    for key in ['name', 'telephone_number', 'address', 'sum_price', 'order']:
+        if key not in request.json:
+            return jsonify({'error': 'Have not parameter', 'parameter': key})
+    if not request.json['order']:
+        return jsonify({'error': 'Empty order'})
+    db_sess = db_session.create_session()
+    order = Orders()
+    if request.json['name']:
+        order.customer_name = request.json['name']
+    if request.json['telephone_number']:
+        order.telephone_number = request.json['telephone_number']
+    order.address = request.json['address']
+    order.sum_price = request.json['sum_price']
+    db_sess.add(order)
+    db_sess.commit()
+    for dish_dict in request.json['order']:
+        dish = db_sess.query(Dishes).filter(Dishes.name == dish_dict['name']).first()
+        version = db_sess.query(Versions).filter(Versions.dish_id == dish.id,
+                                                 Versions.size == dish_dict['size']).first()
+        versions_to_orders = VersionsToOrders()
+        versions_to_orders.version = version
+        versions_to_orders.order = order
+        versions_to_orders.count = dish_dict['count']
+        db_sess.add(versions_to_orders)
+        db_sess.commit()
+    return jsonify({'error': 'OK'})
 
 
 if __name__ == '__main__':

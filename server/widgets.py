@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QWidget, QLabel, QListWidgetItem, QVBoxLayout, QPlainTextEdit, QListWidgetItem
 from server.UI.orders_list import Ui_Form as Ui_orders_list
 from server.UI.order_info import Ui_MainWindow as Ui_order_info
+from datetime import datetime, timedelta
 
 
 class OrderWidget(QMainWindow, Ui_order_info):
@@ -51,3 +52,58 @@ class OrderWidget(QMainWindow, Ui_order_info):
         self.order.is_done = True
         self.db_sess.commit()
         self.close()
+
+
+class OrdersListItem(QListWidgetItem):
+    def __init__(self, text, order_id):
+        super().__init__(text)
+        self.order_id = order_id
+
+    def take_order_id(self):
+        return self.order_id
+
+
+class OrdersListWidget(QWidget, Ui_orders_list):
+    def __init__(self, db_sess, only_recent=False, only_not_completed=False):
+        super().__init__()
+        self.setupUi(self)
+        self.setFixedSize(self.size())
+
+        self.db_sess = db_sess
+        self.only_recent = only_recent
+        self.only_not_completed = only_not_completed
+        self.old_orders_id = None
+        self.opened_windows = []
+
+        self.update_list()
+        self.ordersList.currentItemChanged.connect(self.show_order)
+
+    def update_list(self):
+        if self.only_not_completed:
+            orders = self.db_sess.query(Orders).filter(Orders.is_done == 0)
+        else:
+            orders = self.db_sess.query(Orders).all()
+        if self.only_recent:
+            today = datetime.now().date()
+            orders = filter(lambda obj: (obj.time.date() == today or
+                                         obj.time.date() == today - timedelta(days=1)), orders)
+        orders = list(orders)
+        orders.sort(key=lambda obj: obj.time)
+        orders.reverse()
+        new_orders_id = frozenset(obj.id for obj in orders)
+        if self.old_orders_id != new_orders_id:
+            self.ordersList.clear()
+            for order in orders:
+                item_text = order.time.strftime('%d.%m.%Y %H:%M') + ', ' + order.address
+                self.ordersList.addItem(OrdersListItem(item_text, order.id))
+            self.old_orders_id = new_orders_id
+
+    def show_order(self):
+        current_item = self.ordersList.currentItem()
+        if current_item:
+            order_id = current_item.take_order_id()
+            order = self.db_sess.query(Orders).filter(Orders.id == order_id).first()
+            if order:
+                new_window = OrderWidget(self.db_sess, order)
+                self.opened_windows.append(new_window)
+                new_window.show()

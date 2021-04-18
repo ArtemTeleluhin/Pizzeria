@@ -8,9 +8,11 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QWidget, QLabel, QListWidgetItem, QVBoxLayout, QAction, QListWidgetItem, QStatusBar
 from server.widgets import OrdersListWidget
+from PyQt5 import QtCore
 
 DB_NAME = 'pizzeria_base'
 BOTTOM_PADDING = 30
+UPDATE_FREQUENCY = 15 * 1000
 
 
 class AppWindow(QMainWindow):
@@ -39,6 +41,11 @@ class AppWindow(QMainWindow):
             self.ordersInProgress.size().height() + BOTTOM_PADDING
         )
 
+        self.timer = QtCore.QTimer(self)
+        self.timer.setInterval(UPDATE_FREQUENCY)
+        self.timer.timeout.connect(self.update_orders_list)
+        self.timer.start()
+
     def show_orders_in_progress(self):
         self.ordersInProgress = OrdersListWidget(self.db_sess, only_not_completed=True)
         self.setCentralWidget(self.ordersInProgress)
@@ -47,6 +54,7 @@ class AppWindow(QMainWindow):
         self.recentOrders = OrdersListWidget(self.db_sess, only_recent=True)
         self.setCentralWidget(self.recentOrders)
 
+    @QtCore.pyqtSlot()
     def update_orders_list(self):
         if isinstance(self.centralWidget(), OrdersListWidget):
             self.centralWidget().update_list()

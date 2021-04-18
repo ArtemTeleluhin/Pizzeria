@@ -16,6 +16,7 @@ class OrderWidget(QMainWindow, Ui_order_info):
     def __init__(self, db_sess, order):
         super().__init__()
         self.setupUi(self)
+        self.setWindowTitle('Заказ')
         self.setFixedSize(self.size())
 
         self.db_sess = db_sess
@@ -76,7 +77,7 @@ class OrdersListWidget(QWidget, Ui_orders_list):
         self.opened_windows = []
 
         self.update_list()
-        self.ordersList.currentItemChanged.connect(self.show_order)
+        self.pushButton.clicked.connect(self.show_order)
 
     def update_list(self):
         if self.only_not_completed:

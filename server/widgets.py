@@ -9,6 +9,10 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QWidget, QLabel, QListWidgetItem, QVBoxLayout, QPlainTextEdit, QListWidgetItem
 from server.UI.orders_list import Ui_Form as Ui_orders_list
 from server.UI.order_info import Ui_MainWindow as Ui_order_info
+from server.UI.db_table import Ui_Form as Ui_db_table
+from server.UI.category_dialog import Ui_MainWindow as Ui_category_dialog
+from server.UI.dish_dialog import Ui_MainWindow as Ui_dish_dialog
+from server.UI.version_dialog import Ui_MainWindow as Ui_version_dialog
 from datetime import datetime, timedelta
 
 

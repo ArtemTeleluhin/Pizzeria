@@ -6,7 +6,7 @@ from server.data.orders import Orders
 from server.data.versions_to_orders import VersionsToOrders
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
-    QWidget, QLabel, QListWidgetItem, QVBoxLayout, QPlainTextEdit, QListWidgetItem
+    QWidget, QListWidgetItem, QTableWidgetItem
 from server.UI.orders_list import Ui_Form as Ui_orders_list
 from server.UI.order_info import Ui_MainWindow as Ui_order_info
 from server.UI.db_table import Ui_Form as Ui_db_table
@@ -275,3 +275,48 @@ class VersionDialog(QMainWindow, Ui_version_dialog):
 
     def message(self, text):
         self.statusbar.showMessage(text)
+
+
+class BaseMenuTable(QWidget, Ui_db_table):
+    def __init__(self, db_sess, message_method):
+        super().__init__()
+        self.setupUi(self)
+        self.setFixedSize(self.size())
+
+        self.db_sess = db_sess
+        self.message_method = message_method
+        self.dialog = None
+        self.openedDialog = None
+        self.header = ['id']
+
+        self.addButton.clicked.connect(self.add_element)
+        self.changeButton.clicked.connect(self.change_element)
+
+    def update_table(self):
+        self.tableWidget.clear()
+        self.tableWidget.setColumnCount(len(self.header))
+        self.tableWidget.setHorizontalHeaderLabels(self.header)
+        elements = self.load_table()
+        self.tableWidget.setRowCount(len(elements))
+        for i, elem in enumerate(elements):
+            for j, value in enumerate(elem):
+                self.tableWidget.setItem(i, j, QTableWidgetItem(str(value)))
+
+    def find_selected_element_id(self):
+        rows = sorted([obj.row() for obj in self.tableWidget.selectedItems()])
+        if rows:
+            row = rows[0]
+            return int(self.tableWidget.item(row, 0).text())
+        return None
+
+    def add_element(self):
+        self.openedDialog = self.dialog(self, self.db_sess)
+        self.openedDialog.show()
+
+    def change_element(self):
+        elem_id = self.find_selected_element_id()
+        if elem_id:
+            self.openedDialog = self.dialog(self, self.db_sess, version_id=elem_id)
+            self.openedDialog.show()
+        else:
+            self.message_method('Ничего не выбрано')

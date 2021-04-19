@@ -128,6 +128,7 @@ class CategoryDialog(QMainWindow, Ui_category_dialog):
         else:
             self.category = self.db_sess.query(Categories).filter(Categories.id == category_id)
             self.inputName.setText(self.category.name)
+        self.saveButton.clicked.connect(self.save)
 
     def save(self):
         name = self.inputName.text()
@@ -146,6 +147,61 @@ class CategoryDialog(QMainWindow, Ui_category_dialog):
         else:
             self.category = Categories(name=name)
             self.db_sess.add(self.category)
+        self.db_sess.commit()
+        self.parent.update_table()
+        self.close()
+
+    def message(self, text):
+        self.statusbar.showMessage(text)
+
+
+class DishDialog(QMainWindow, Ui_dish_dialog):
+    def __init__(self, parent, db_sess, dish_id=None):
+        super().__init__()
+        self.setupUi(self)
+        self.setFixedSize(self.size())
+
+        self.parent = parent
+        self.db_sess = db_sess
+        self.dish_id = dish_id
+
+        for category in self.db_sess.query(Categories).all():
+            self.chooseCategory.addItem(category.name)
+
+        if dish_id:
+            self.dish = self.db_sess.query(Dishes).filter(Dishes.id == dish_id)
+            self.chooseCategory.setCurrentText(self.dish.category.name)
+            self.inputName.setText(self.dish.name)
+            self.inputAddInfo.setText(self.dish.add_info)
+            self.checkIsSale.setChecked(self.dish.is_sale)
+        else:
+            self.dish = None
+        self.saveButton.clicked.connect(self.save)
+
+    def save(self):
+        category_name = self.chooseCategory.currentText()
+        name = self.inputName
+        add_info = self.inputAddInfo
+        is_sale = self.checkIsSale.isChecked()
+        if not name:
+            self.message('Имя блюда не может быть пустым')
+            return
+        alternative_dish = self.db_sess.query(Dishes).filter(
+            Dishes.name == name,
+            Dishes.id != self.dish_id
+        ).first()
+        if alternative_dish:
+            self.message('Уже есть другое блюдо с таким названием')
+            return
+        category = self.db_sess.query(Categories).filter(Categories.name == category_name).first()
+        if self.dish:
+            self.dish.category = category
+            self.dish.name = name
+            self.dish.add_info = add_info
+            self.dish.is_sale = is_sale
+        else:
+            self.dish = Dishes(category=category, name=name, add_info=add_info, is_sale=is_sale)
+            self.db_sess.add(self.dish)
         self.db_sess.commit()
         self.parent.update_table()
         self.close()

@@ -15,6 +15,8 @@ from server.UI.dish_dialog import Ui_MainWindow as Ui_dish_dialog
 from server.UI.version_dialog import Ui_MainWindow as Ui_version_dialog
 from datetime import datetime, timedelta
 
+MAX_PRICE = 10 ** 6
+
 
 class OrderWidget(QMainWindow, Ui_order_info):
     def __init__(self, db_sess, order):
@@ -202,6 +204,71 @@ class DishDialog(QMainWindow, Ui_dish_dialog):
         else:
             self.dish = Dishes(category=category, name=name, add_info=add_info, is_sale=is_sale)
             self.db_sess.add(self.dish)
+        self.db_sess.commit()
+        self.parent.update_table()
+        self.close()
+
+    def message(self, text):
+        self.statusbar.showMessage(text)
+
+
+class VersionDialog(QMainWindow, Ui_version_dialog):
+    def __init__(self, parent, db_sess, version_id=None):
+        super().__init__()
+        self.setupUi(self)
+        self.setFixedSize(self.size())
+
+        self.parent = parent
+        self.db_sess = db_sess
+        self.version_id = version_id
+
+        self.inputPrice.setMaximum(MAX_PRICE)
+        for category in self.db_sess.query(Categories).all():
+            self.chooseCategory.addItem(category.name)
+
+        if version_id:
+            self.version = self.db_sess.query(Versions).filter(Versions.id == version_id).first()
+            self.chooseCategory.setCurrentText(self.version.dish.category.name)
+            self.update_choose_dish()
+            self.chooseDish.setCurrentText(self.version.dish.name)
+            self.inputSize.setText(self.version.size)
+            self.inputPrice.setValue(self.version.price)
+        else:
+            self.version = None
+            self.update_choose_dish()
+        self.chooseCategory.currentIndexChanged.connect(self.update_choose_dish)
+        self.saveButton.clicked.connect(self.save)
+
+    def update_choose_dish(self):
+        category_name = self.chooseCategory.currentText()
+        category = self.db_sess.query(Categories).filter(Categories.name == category_name).first()
+        self.chooseDish.clear()
+        for dish in self.db_sess.query(Dishes).filter(Dishes.category == category):
+            self.chooseDish.addItem(dish.name)
+
+    def save(self):
+        dish_name = self.chooseDish.currentText()
+        size = self.inputSize.text()
+        price = self.inputPrice.value()
+        dish = self.db_sess.query(Dishes).filter(Dishes.name == dish_name).first()
+        if not size:
+            self.message('Размер блюда не может быть пустым')
+            return
+        alternative_version = self.db_sess.query(Versions).filter(
+            Versions.size == size,
+            Versions.dish == dish,
+            Versions.id != self.version_id
+        ).first()
+        if alternative_version:
+            self.message('Уже есть такой размер блюда')
+            return
+        if self.version:
+            self.version.dish = dish
+            self.version.size = size
+            self.version.price = price
+        else:
+            self.version = Versions(dish=dish, size=size, price=price)
+            self.db_sess.add(self.version)
         self.db_sess.commit()
         self.parent.update_table()
         self.close()

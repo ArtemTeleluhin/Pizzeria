@@ -6,7 +6,7 @@ from server.data.orders import Orders
 from server.data.versions_to_orders import VersionsToOrders
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
-    QWidget, QListWidgetItem, QTableWidgetItem
+    QWidget, QListWidgetItem, QTableWidgetItem, QMessageBox
 from server.UI.orders_list import Ui_Form as Ui_orders_list
 from server.UI.order_info import Ui_MainWindow as Ui_order_info
 from server.UI.db_table import Ui_Form as Ui_db_table
@@ -318,5 +318,40 @@ class BaseMenuTable(QWidget, Ui_db_table):
         if elem_id:
             self.openedDialog = self.dialog(self, self.db_sess, version_id=elem_id)
             self.openedDialog.show()
+        else:
+            self.message_method('Ничего не выбрано')
+
+
+class CategoriesTable(BaseMenuTable):
+    def __init__(self, db_sess, message_method):
+        super().__init__(db_sess, message_method)
+
+        self.dialog = CategoryDialog
+        self.header = ['id', 'Категория']
+        self.deleteButton.clicked.connect(self.delete_element)
+
+    def load_table(self):
+        table = []
+        for category in self.db_sess.query(Categories).all():
+            table.append([category.id, category.name])
+        return table
+
+    def delete_element(self):
+        elem_id = self.find_selected_element_id()
+        category = self.db_sess.query(Categories).filter(Categories.id == elem_id).first()
+        if elem_id:
+            if len(category.dishes):
+                self.message_method(
+                    f'В категории с id {elem_id} есть блюда, поэтому её нельзя удалить'
+                )
+                return
+            valid = QMessageBox.question(
+                self, '', f'Вы точно хотите удалить категорию с id {elem_id}?',
+                QMessageBox.Yes, QMessageBox.No
+            )
+            if valid == QMessageBox.No:
+                return
+            self.db_sess.delete(category)
+            self.db_sess.commit()
         else:
             self.message_method('Ничего не выбрано')

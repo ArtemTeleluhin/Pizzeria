@@ -112,3 +112,43 @@ class OrdersListWidget(QWidget, Ui_orders_list):
                 new_window = OrderWidget(self.db_sess, order)
                 self.opened_windows.append(new_window)
                 new_window.show()
+
+
+class CategoryDialog(QMainWindow, Ui_category_dialog):
+    def __init__(self, parent, db_sess, category_id=None):
+        super().__init__()
+        self.setupUi(self)
+        self.setFixedSize(self.size())
+
+        self.parent = parent
+        self.db_sess = db_sess
+        self.category_id = category_id
+        if category_id is None:
+            self.category = None
+        else:
+            self.category = self.db_sess.query(Categories).filter(Categories.id == category_id)
+            self.inputName.setText(self.category.name)
+
+    def save(self):
+        name = self.inputName.text()
+        if not name:
+            self.message('Имя категории не может быть пустым')
+            return
+        alternative_category = self.db_sess.query(Categories).filter(
+            Categories.name == name,
+            Categories.id != self.category_id
+        ).first()
+        if alternative_category:
+            self.message('Уже есть другая категория с таким названием')
+            return
+        if self.category:
+            self.category.name = name
+        else:
+            self.category = Categories(name=name)
+            self.db_sess.add(self.category)
+        self.db_sess.commit()
+        self.parent.update_table()
+        self.close()
+
+    def message(self, text):
+        self.statusbar.showMessage(text)

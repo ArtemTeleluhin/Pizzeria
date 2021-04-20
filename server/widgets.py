@@ -124,6 +124,7 @@ class CategoryDialog(QMainWindow, Ui_category_dialog):
     def __init__(self, parent, db_sess, elem_id=None):
         super().__init__()
         self.setupUi(self)
+        self.setWindowTitle('Категория')
         self.setFixedSize(self.size())
 
         self.parent = parent
@@ -174,6 +175,7 @@ class DishDialog(QMainWindow, Ui_dish_dialog):
     def __init__(self, parent, db_sess, elem_id=None):
         super().__init__()
         self.setupUi(self)
+        self.setWindowTitle('Блюдо')
         self.setFixedSize(self.size())
 
         self.parent = parent
@@ -236,6 +238,7 @@ class VersionDialog(QMainWindow, Ui_version_dialog):
     def __init__(self, parent, db_sess, elem_id=None):
         super().__init__()
         self.setupUi(self)
+        self.setWindowTitle('Версия')
         self.setFixedSize(self.size())
 
         self.parent = parent

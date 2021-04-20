@@ -71,7 +71,7 @@ class Order:
         return self.json_formatted
 
     def send_order(self):
-        pprint(post('http://127.0.0.1:8080/make_order', json=self.get_json()).json())
+        return post('http://127.0.0.1:8080/make_order', json=self.get_json()).json()
 
 
 class CollectOrder(QMainWindow):

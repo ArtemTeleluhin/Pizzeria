@@ -8,6 +8,8 @@ import requests
 from flask import Flask, jsonify, request
 from pprint import pprint
 
+from requests import post
+
 PIZZERIA_ADDRESS = "http://127.0.0.1:8080"
 NUMBER_OF_CURRENT_NOTES = 6
 
@@ -37,6 +39,39 @@ class Product:
 
     def take_number_of_proportion(self, ind):
         return self.number_of_proportion[ind]
+
+
+class Order:
+    def __init__(self, name, telephone, address, list_of_products, sum_price):
+        print(name, telephone, address, list_of_products, sum_price)
+        self.name = name
+        self.telephone = telephone
+        self.address = address
+        self.list_of_products = list_of_products
+        self.sum_price = sum_price
+        self.json_formatted = {}
+
+    def get_json(self):
+        self.json_formatted['order'] = []
+        for product_info in self.list_of_products:
+            product = product_info[0]
+            proportion = product_info[1]
+            ind_of_proportion = product_info[2]
+            tmp = {
+                'name': product.get_name(),
+                'size': proportion['size'],
+                'price': proportion['price'],
+                'count': product.take_number_of_proportion(ind_of_proportion)
+            }
+            self.json_formatted['order'].append(tmp)
+        self.json_formatted['sum_price'] = self.sum_price
+        self.json_formatted['name'] = self.name
+        self.json_formatted['telephone_number'] = self.telephone
+        self.json_formatted['address'] = self.address
+        return self.json_formatted
+
+    def send_order(self):
+        pprint(post('http://127.0.0.1:8080/make_order', json=self.get_json()).json())
 
 
 class CollectOrder(QMainWindow):
@@ -166,14 +201,20 @@ class Basket(QMainWindow):
         uic.loadUi('basket.ui', self)
         self.buttons_connect()
         for product_info in self.order_products[
-                       self.current:min(self.current + NUMBER_OF_CURRENT_NOTES, len(self.order_products))]:
+                            self.current:min(self.current + NUMBER_OF_CURRENT_NOTES, len(self.order_products))]:
             self.show_row(product_info[0], product_info[1], product_info[2])
         self.lcdNumber.display(self.cost)
+
+    def send_order(self):
+        self.order = Order(self.input_name.displayText(), self.input_telephone.displayText(),
+                           self.input_address.displayText(), self.order_products, self.cost)
+        self.order.send_order()
 
     def buttons_connect(self):
         self.to_menu.clicked.connect(self.to_collect_order)
         self.forward.clicked.connect(self.forward_notes)
         self.back.clicked.connect(self.back_notes)
+        self.make_order.clicked.connect(self.send_order)
 
 
 def get_menu():

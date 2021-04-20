@@ -52,7 +52,7 @@ class CollectOrder(QMainWindow):
     def start(self, text, new_type=True):
         if new_type:
             self.current = 0
-        uic.loadUi('untitled.ui', self)
+        uic.loadUi('choose_products.ui', self)
         unique_types = set()
         self.comboBox.addItem(text)
         unique_types.add(text)
@@ -85,7 +85,7 @@ class CollectOrder(QMainWindow):
 
     def open_basket(self):
         self.second_form = Basket(self.menu)
-        self.second_form.show()
+        self.setCentralWidget(self.second_form)
 
     def forward_notes(self):
         if self.current + NUMBER_OF_CURRENT_NOTES <= len(self.menu[self.comboBox.currentText()]):
@@ -99,7 +99,7 @@ class CollectOrder(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle('Главная форма')
-        self.pushButton.clicked.connect(self.open_basket)
+        self.Basket.clicked.connect(self.open_basket)
         self.forward.clicked.connect(self.forward_notes)
         self.back.clicked.connect(self.back_notes)
         for i, product in enumerate(
@@ -122,12 +122,31 @@ class Basket(QMainWindow):
         self.menu = menu
         self.last_row = 0
         self.cost = 0
+        self.current = 0
+        self.order_products = []
+        for type_of_product in self.menu.keys():
+            for i, product in enumerate(self.menu[type_of_product]):
+                for j, proportion in enumerate(product.get_proportion()):
+                    if product.take_number_of_proportion(j) != 0:
+                        self.cost += product.take_number_of_proportion(j) * proportion['price']
+                        self.order_products.append([product, proportion, j])
+        self.buttons_connect()
         self.show_chosen_menu()
 
     def new_lbl(self, name):
         self.labels.append(QLabel(self))
         self.labels[-1].setText(name)
         # self.labels[-1].move(150, 150)
+
+    def forward_notes(self):
+        if self.current + NUMBER_OF_CURRENT_NOTES <= len(self.order_products):
+            self.current += NUMBER_OF_CURRENT_NOTES
+            self.show_chosen_menu()
+
+    def back_notes(self):
+        if self.current - NUMBER_OF_CURRENT_NOTES >= 0:
+            self.current -= NUMBER_OF_CURRENT_NOTES
+            self.show_chosen_menu()
 
     def show_row(self, product, proportion, id_proportion):
         self.new_lbl(product.get_name())
@@ -139,15 +158,22 @@ class Basket(QMainWindow):
         self.gridLayout.addWidget(self.labels[-1], self.last_row, 1)
         self.last_row += 1
 
+    def to_collect_order(self):
+        self.collect_order = CollectOrder(self.menu)
+        self.setCentralWidget(self.collect_order)
+
     def show_chosen_menu(self):
-        for type_of_product in self.menu.keys():
-            for i, product in enumerate(self.menu[type_of_product]):
-                for j, proportion in enumerate(product.get_proportion()):
-                    # print(product.get_name(), product.take_number_of_proportion(j))
-                    if product.take_number_of_proportion(j) != 0:
-                        self.cost += product.take_number_of_proportion(j) * proportion['price']
-                        self.show_row(product, proportion, j)
+        uic.loadUi('basket.ui', self)
+        self.buttons_connect()
+        for product_info in self.order_products[
+                       self.current:min(self.current + NUMBER_OF_CURRENT_NOTES, len(self.order_products))]:
+            self.show_row(product_info[0], product_info[1], product_info[2])
         self.lcdNumber.display(self.cost)
+
+    def buttons_connect(self):
+        self.to_menu.clicked.connect(self.to_collect_order)
+        self.forward.clicked.connect(self.forward_notes)
+        self.back.clicked.connect(self.back_notes)
 
 
 def get_menu():

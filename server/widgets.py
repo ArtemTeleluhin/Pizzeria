@@ -255,7 +255,7 @@ class VersionDialog(QMainWindow, Ui_version_dialog):
         category_name = self.chooseCategory.currentText()
         category = self.db_sess.query(Categories).filter(Categories.name == category_name).first()
         self.chooseDish.clear()
-        for dish in self.db_sess.query(Dishes).filter(Dishes.category == category):
+        for dish in category.dishes:
             self.chooseDish.addItem(dish.name)
 
     def save(self):

@@ -116,6 +116,10 @@ class OrdersListWidget(QWidget, Ui_orders_list):
                 new_window.show()
 
 
+class NotFoundTableElem(Exception):
+    pass
+
+
 class CategoryDialog(QMainWindow, Ui_category_dialog):
     def __init__(self, parent, db_sess, category_id=None):
         super().__init__()
@@ -128,7 +132,11 @@ class CategoryDialog(QMainWindow, Ui_category_dialog):
         if category_id is None:
             self.category = None
         else:
-            self.category = self.db_sess.query(Categories).filter(Categories.id == category_id)
+            self.category = self.db_sess.query(Categories).filter(
+                Categories.id == category_id
+            ).first()
+            if not self.category:
+                raise NotFoundTableElem
             self.inputName.setText(self.category.name)
         self.saveButton.clicked.connect(self.save)
 
@@ -171,7 +179,9 @@ class DishDialog(QMainWindow, Ui_dish_dialog):
             self.chooseCategory.addItem(category.name)
 
         if dish_id:
-            self.dish = self.db_sess.query(Dishes).filter(Dishes.id == dish_id)
+            self.dish = self.db_sess.query(Dishes).filter(Dishes.id == dish_id).first()
+            if not self.dish:
+                raise NotFoundTableElem
             self.chooseCategory.setCurrentText(self.dish.category.name)
             self.inputName.setText(self.dish.name)
             self.inputAddInfo.setText(self.dish.add_info)
@@ -228,6 +238,8 @@ class VersionDialog(QMainWindow, Ui_version_dialog):
 
         if version_id:
             self.version = self.db_sess.query(Versions).filter(Versions.id == version_id).first()
+            if not self.version:
+                raise NotFoundTableElem
             self.chooseCategory.setCurrentText(self.version.dish.category.name)
             self.update_choose_dish()
             self.chooseDish.setCurrentText(self.version.dish.name)
@@ -316,8 +328,11 @@ class BaseMenuTable(QWidget, Ui_db_table):
     def change_element(self):
         elem_id = self.find_selected_element_id()
         if elem_id:
-            self.openedDialog = self.dialog(self, self.db_sess, version_id=elem_id)
-            self.openedDialog.show()
+            try:
+                self.openedDialog = self.dialog(self, self.db_sess, version_id=elem_id)
+                self.openedDialog.show()
+            except NotFoundTableElem:
+                self.message_method(f'Нет элемента с id {str(elem_id)}')
         else:
             self.message_method('Ничего не выбрано')
 

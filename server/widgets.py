@@ -355,3 +355,77 @@ class CategoriesTable(BaseMenuTable):
             self.db_sess.commit()
         else:
             self.message_method('Ничего не выбрано')
+
+
+class DishesTable(BaseMenuTable):
+    def __init__(self, db_sess, message_method):
+        super().__init__(db_sess, message_method)
+
+        self.dialog = DishDialog
+        self.header = ['id', 'Название', 'Категория',
+                       'Доп. информация', 'В продаже']
+        self.deleteButton.clicked.connect(self.delete_element)
+
+    def load_table(self):
+        table = []
+        for dish in self.db_sess.query(Dishes).all():
+            table.append([dish.id, dish.name, dish.category.name, dish.add_info,
+                          'Yes' if dish.is_sale else 'No'])
+        return table
+
+    def delete_element(self):
+        elem_id = self.find_selected_element_id()
+        dish = self.db_sess.query(Dishes).filter(Dishes.id == elem_id).first()
+        if elem_id:
+            if len(dish.versions):
+                self.message_method(
+                    f'У блюда с id {elem_id} есть виды, поэтому его нельзя удалить'
+                )
+                return
+            valid = QMessageBox.question(
+                self, '', f'Вы точно хотите удалить блюдо с id {elem_id}?',
+                QMessageBox.Yes, QMessageBox.No
+            )
+            if valid == QMessageBox.No:
+                return
+            self.db_sess.delete(dish)
+            self.db_sess.commit()
+        else:
+            self.message_method('Ничего не выбрано')
+
+
+class VersionsTable(BaseMenuTable):
+    def __init__(self, db_sess, message_method):
+        super().__init__(db_sess, message_method)
+
+        self.dialog = VersionDialog
+        self.header = ['id', 'Блюдо', 'Категория',
+                       'Размер', 'Цена']
+        self.deleteButton.clicked.connect(self.delete_element)
+
+    def load_table(self):
+        table = []
+        for version in self.db_sess.query(Versions).all():
+            table.append([version.id, version.dish.name,
+                          version.dish.category.name, version.size,
+                          str(version.price)])
+        return table
+
+    def delete_element(self):
+        elem_id = self.find_selected_element_id()
+        version = self.db_sess.query(Versions).filter(Versions.id == elem_id).first()
+        if elem_id:
+            valid = QMessageBox.question(
+                self, '', f'Вы точно хотите удалить версию с id {elem_id}?',
+                QMessageBox.Yes, QMessageBox.No
+            )
+            if valid == QMessageBox.No:
+                return
+            self.db_sess.query(VersionsToOrders).filter(
+                VersionsToOrders.version_id == elem_id
+            ).delete()
+            self.db_sess.commit()
+            self.db_sess.delete(version)
+            self.db_sess.commit()
+        else:
+            self.message_method('Ничего не выбрано')

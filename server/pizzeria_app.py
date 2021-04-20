@@ -7,7 +7,7 @@ from server.data.versions_to_orders import VersionsToOrders
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QWidget, QLabel, QListWidgetItem, QVBoxLayout, QAction, QListWidgetItem, QStatusBar
-from server.widgets import OrdersListWidget
+from server.widgets import OrdersListWidget, CategoriesTable, DishesTable, VersionsTable
 from PyQt5 import QtCore
 
 DB_NAME = 'pizzeria_base'
@@ -34,6 +34,21 @@ class AppWindow(QMainWindow):
         self.menuBar().addAction(self.to_recent_orders)
         self.to_recent_orders.triggered.connect(self.show_recent_orders)
 
+        self.to_categories_table = QAction(self)
+        self.to_categories_table.setText('Категории')
+        self.menuBar().addAction(self.to_categories_table)
+        self.to_categories_table.triggered.connect(self.show_categories_table)
+
+        self.to_dishes_table = QAction(self)
+        self.to_dishes_table.setText('Блюда')
+        self.menuBar().addAction(self.to_dishes_table)
+        self.to_dishes_table.triggered.connect(self.show_dishes_table)
+
+        self.to_versions_table = QAction(self)
+        self.to_versions_table.setText('Версии блюд')
+        self.menuBar().addAction(self.to_versions_table)
+        self.to_versions_table.triggered.connect(self.show_versions_table)
+
         self.statusbar = QStatusBar(self)
         self.setStatusBar(self.statusbar)
         self.setFixedSize(
@@ -53,6 +68,18 @@ class AppWindow(QMainWindow):
     def show_recent_orders(self):
         self.recentOrders = OrdersListWidget(self.db_sess, only_recent=True)
         self.setCentralWidget(self.recentOrders)
+
+    def show_categories_table(self):
+        self.categoriesTable = CategoriesTable(self.db_sess, self.message)
+        self.setCentralWidget(self.categoriesTable)
+
+    def show_dishes_table(self):
+        self.dishesTable = DishesTable(self.db_sess, self.message)
+        self.setCentralWidget(self.dishesTable)
+
+    def show_versions_table(self):
+        self.versionsTable = VersionsTable(self.db_sess, self.message)
+        self.setCentralWidget(self.versionsTable)
 
     @QtCore.pyqtSlot()
     def update_orders_list(self):

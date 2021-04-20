@@ -121,19 +121,19 @@ class NotFoundTableElem(Exception):
 
 
 class CategoryDialog(QMainWindow, Ui_category_dialog):
-    def __init__(self, parent, db_sess, category_id=None):
+    def __init__(self, parent, db_sess, elem_id=None):
         super().__init__()
         self.setupUi(self)
         self.setFixedSize(self.size())
 
         self.parent = parent
         self.db_sess = db_sess
-        self.category_id = category_id
-        if category_id is None:
+        self.category_id = elem_id
+        if elem_id is None:
             self.category = None
         else:
             self.category = self.db_sess.query(Categories).filter(
-                Categories.id == category_id
+                Categories.id == elem_id
             ).first()
             if not self.category:
                 raise NotFoundTableElem
@@ -166,20 +166,20 @@ class CategoryDialog(QMainWindow, Ui_category_dialog):
 
 
 class DishDialog(QMainWindow, Ui_dish_dialog):
-    def __init__(self, parent, db_sess, dish_id=None):
+    def __init__(self, parent, db_sess, elem_id=None):
         super().__init__()
         self.setupUi(self)
         self.setFixedSize(self.size())
 
         self.parent = parent
         self.db_sess = db_sess
-        self.dish_id = dish_id
+        self.dish_id = elem_id
 
         for category in self.db_sess.query(Categories).all():
             self.chooseCategory.addItem(category.name)
 
-        if dish_id:
-            self.dish = self.db_sess.query(Dishes).filter(Dishes.id == dish_id).first()
+        if elem_id:
+            self.dish = self.db_sess.query(Dishes).filter(Dishes.id == elem_id).first()
             if not self.dish:
                 raise NotFoundTableElem
             self.chooseCategory.setCurrentText(self.dish.category.name)
@@ -223,21 +223,21 @@ class DishDialog(QMainWindow, Ui_dish_dialog):
 
 
 class VersionDialog(QMainWindow, Ui_version_dialog):
-    def __init__(self, parent, db_sess, version_id=None):
+    def __init__(self, parent, db_sess, elem_id=None):
         super().__init__()
         self.setupUi(self)
         self.setFixedSize(self.size())
 
         self.parent = parent
         self.db_sess = db_sess
-        self.version_id = version_id
+        self.version_id = elem_id
 
         self.inputPrice.setMaximum(MAX_PRICE)
         for category in self.db_sess.query(Categories).all():
             self.chooseCategory.addItem(category.name)
 
-        if version_id:
-            self.version = self.db_sess.query(Versions).filter(Versions.id == version_id).first()
+        if elem_id:
+            self.version = self.db_sess.query(Versions).filter(Versions.id == elem_id).first()
             if not self.version:
                 raise NotFoundTableElem
             self.chooseCategory.setCurrentText(self.version.dish.category.name)
@@ -329,7 +329,7 @@ class BaseMenuTable(QWidget, Ui_db_table):
         elem_id = self.find_selected_element_id()
         if elem_id:
             try:
-                self.openedDialog = self.dialog(self, self.db_sess, version_id=elem_id)
+                self.openedDialog = self.dialog(self, self.db_sess, elem_id=elem_id)
                 self.openedDialog.show()
             except NotFoundTableElem:
                 self.message_method(f'Нет элемента с id {str(elem_id)}')
@@ -344,6 +344,7 @@ class CategoriesTable(BaseMenuTable):
         self.dialog = CategoryDialog
         self.header = ['id', 'Категория']
         self.deleteButton.clicked.connect(self.delete_element)
+        self.update_table()
 
     def load_table(self):
         table = []
@@ -383,6 +384,7 @@ class DishesTable(BaseMenuTable):
         self.header = ['id', 'Название', 'Категория',
                        'Доп. информация', 'В продаже']
         self.deleteButton.clicked.connect(self.delete_element)
+        self.update_table()
 
     def load_table(self):
         table = []
@@ -423,6 +425,7 @@ class VersionsTable(BaseMenuTable):
         self.header = ['id', 'Блюдо', 'Категория',
                        'Размер', 'Цена']
         self.deleteButton.clicked.connect(self.delete_element)
+        self.update_table()
 
     def load_table(self):
         table = []

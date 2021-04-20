@@ -145,10 +145,15 @@ class CategoryDialog(QMainWindow, Ui_category_dialog):
         if not name:
             self.message('Имя категории не может быть пустым')
             return
-        alternative_category = self.db_sess.query(Categories).filter(
-            Categories.name == name,
-            Categories.id != self.category_id
-        ).first()
+        if self.category_id:
+            alternative_category = self.db_sess.query(Categories).filter(
+                Categories.name == name,
+                Categories.id != self.category_id
+            ).first()
+        else:
+            alternative_category = self.db_sess.query(Categories).filter(
+                Categories.name == name
+            ).first()
         if alternative_category:
             self.message('Уже есть другая категория с таким названием')
             return
@@ -192,16 +197,21 @@ class DishDialog(QMainWindow, Ui_dish_dialog):
 
     def save(self):
         category_name = self.chooseCategory.currentText()
-        name = self.inputName
-        add_info = self.inputAddInfo
+        name = self.inputName.text()
+        add_info = self.inputAddInfo.text()
         is_sale = self.checkIsSale.isChecked()
         if not name:
             self.message('Имя блюда не может быть пустым')
             return
-        alternative_dish = self.db_sess.query(Dishes).filter(
-            Dishes.name == name,
-            Dishes.id != self.dish_id
-        ).first()
+        if self.dish_id:
+            alternative_dish = self.db_sess.query(Dishes).filter(
+                Dishes.name == name,
+                Dishes.id != self.dish_id
+            ).first()
+        else:
+            alternative_dish = self.db_sess.query(Dishes).filter(
+                Dishes.name == name
+            ).first()
         if alternative_dish:
             self.message('Уже есть другое блюдо с таким названием')
             return
@@ -266,11 +276,17 @@ class VersionDialog(QMainWindow, Ui_version_dialog):
         if not size:
             self.message('Размер блюда не может быть пустым')
             return
-        alternative_version = self.db_sess.query(Versions).filter(
-            Versions.size == size,
-            Versions.dish == dish,
-            Versions.id != self.version_id
-        ).first()
+        if self.version_id:
+            alternative_version = self.db_sess.query(Versions).filter(
+                Versions.size == size,
+                Versions.dish == dish,
+                Versions.id != self.version_id
+            ).first()
+        else:
+            alternative_version = self.db_sess.query(Versions).filter(
+                Versions.size == size,
+                Versions.dish == dish
+            ).first()
         if alternative_version:
             self.message('Уже есть такой размер блюда')
             return

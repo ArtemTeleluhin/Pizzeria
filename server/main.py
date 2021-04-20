@@ -47,6 +47,16 @@ def make_order():
     if not request.json['order']:
         return jsonify({'error': 'Empty order'})
     db_sess = db_session.create_session()
+    for dish_dict in request.json['order']:
+        dish = db_sess.query(Dishes).filter(Dishes.name == dish_dict['name']).first()
+        if not dish:
+            return jsonify({'error': 'Nonexistent dish'})
+        if not dish.is_sale:
+            return jsonify({'error': 'Not sale dish'})
+        version = db_sess.query(Versions).filter(Versions.dish == dish,
+                                                 Versions.size == dish_dict['size']).first()
+        if not version:
+            return jsonify({'error': 'Nonexistent version'})
     order = Orders()
     if request.json['name']:
         order.customer_name = request.json['name']
@@ -58,7 +68,7 @@ def make_order():
     db_sess.commit()
     for dish_dict in request.json['order']:
         dish = db_sess.query(Dishes).filter(Dishes.name == dish_dict['name']).first()
-        version = db_sess.query(Versions).filter(Versions.dish_id == dish.id,
+        version = db_sess.query(Versions).filter(Versions.dish == dish,
                                                  Versions.size == dish_dict['size']).first()
         versions_to_orders = VersionsToOrders()
         versions_to_orders.version = version

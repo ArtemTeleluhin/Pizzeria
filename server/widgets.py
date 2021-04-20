@@ -338,15 +338,18 @@ class CategoriesTable(BaseMenuTable):
 
     def delete_element(self):
         elem_id = self.find_selected_element_id()
-        category = self.db_sess.query(Categories).filter(Categories.id == elem_id).first()
         if elem_id:
+            category = self.db_sess.query(Categories).filter(Categories.id == elem_id).first()
+            if not category:
+                self.message_method(f'Нет категории с id {str(elem_id)}')
+                return
             if len(category.dishes):
                 self.message_method(
-                    f'В категории с id {elem_id} есть блюда, поэтому её нельзя удалить'
+                    f'В категории с id {str(elem_id)} есть блюда, поэтому её нельзя удалить'
                 )
                 return
             valid = QMessageBox.question(
-                self, '', f'Вы точно хотите удалить категорию с id {elem_id}?',
+                self, '', f'Вы точно хотите удалить категорию с id {str(elem_id)}?',
                 QMessageBox.Yes, QMessageBox.No
             )
             if valid == QMessageBox.No:
@@ -375,15 +378,18 @@ class DishesTable(BaseMenuTable):
 
     def delete_element(self):
         elem_id = self.find_selected_element_id()
-        dish = self.db_sess.query(Dishes).filter(Dishes.id == elem_id).first()
         if elem_id:
+            dish = self.db_sess.query(Dishes).filter(Dishes.id == elem_id).first()
+            if not dish:
+                self.message_method(f'Нет блюда с id {str(elem_id)}')
+                return
             if len(dish.versions):
                 self.message_method(
-                    f'У блюда с id {elem_id} есть виды, поэтому его нельзя удалить'
+                    f'У блюда с id {str(elem_id)} есть виды, поэтому его нельзя удалить'
                 )
                 return
             valid = QMessageBox.question(
-                self, '', f'Вы точно хотите удалить блюдо с id {elem_id}?',
+                self, '', f'Вы точно хотите удалить блюдо с id {str(elem_id)}?',
                 QMessageBox.Yes, QMessageBox.No
             )
             if valid == QMessageBox.No:
@@ -413,10 +419,13 @@ class VersionsTable(BaseMenuTable):
 
     def delete_element(self):
         elem_id = self.find_selected_element_id()
-        version = self.db_sess.query(Versions).filter(Versions.id == elem_id).first()
         if elem_id:
+            version = self.db_sess.query(Versions).filter(Versions.id == elem_id).first()
+            if not version:
+                self.message_method(f'Нет версии с id {str(elem_id)}')
+                return
             valid = QMessageBox.question(
-                self, '', f'Вы точно хотите удалить версию с id {elem_id}?',
+                self, '', f'Вы точно хотите удалить версию с id {str(elem_id)}?',
                 QMessageBox.Yes, QMessageBox.No
             )
             if valid == QMessageBox.No:

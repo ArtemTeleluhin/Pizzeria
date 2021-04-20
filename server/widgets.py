@@ -388,6 +388,7 @@ class CategoriesTable(BaseMenuTable):
                 return
             self.db_sess.delete(category)
             self.db_sess.commit()
+            self.update_table()
         else:
             self.message_method('Ничего не выбрано')
 
@@ -429,6 +430,7 @@ class DishesTable(BaseMenuTable):
                 return
             self.db_sess.delete(dish)
             self.db_sess.commit()
+            self.update_table()
         else:
             self.message_method('Ничего не выбрано')
 
@@ -470,5 +472,6 @@ class VersionsTable(BaseMenuTable):
             self.db_sess.commit()
             self.db_sess.delete(version)
             self.db_sess.commit()
+            self.update_table()
         else:
             self.message_method('Ничего не выбрано')

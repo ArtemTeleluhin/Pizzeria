@@ -7,14 +7,20 @@
     <x>0</x>
     <y>0</y>
     <width>650</width>
-    <height>600</height>
+    <height>650</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="to_menu">
     <property name="geometry">
      <rect>
       <x>40</x>
@@ -36,9 +42,9 @@
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>120</y>
+      <y>160</y>
       <width>281</width>
-      <height>331</height>
+      <height>291</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -175,6 +181,32 @@
     </property>
     <property name="text">
      <string>Заказать</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="back">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>110</y>
+      <width>131</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;-</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="forward">
+    <property name="geometry">
+     <rect>
+      <x>190</x>
+      <y>110</y>
+      <width>131</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>-&gt;</string>
     </property>
    </widget>
   </widget>

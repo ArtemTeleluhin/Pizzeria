@@ -52,7 +52,7 @@ class CollectOrder(QMainWindow):
     def start(self, text, new_type=True):
         if new_type:
             self.current = 0
-        uic.loadUi('untitled.ui', self)
+        uic.loadUi('choose_products.ui', self)
         unique_types = set()
         self.comboBox.addItem(text)
         unique_types.add(text)
@@ -85,7 +85,7 @@ class CollectOrder(QMainWindow):
 
     def open_basket(self):
         self.second_form = Basket(self.menu)
-        self.second_form.show()
+        self.setCentralWidget(self.second_form)
 
     def forward_notes(self):
         if self.current + NUMBER_OF_CURRENT_NOTES <= len(self.menu[self.comboBox.currentText()]):
@@ -99,7 +99,7 @@ class CollectOrder(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle('Главная форма')
-        self.pushButton.clicked.connect(self.open_basket)
+        self.Basket.clicked.connect(self.open_basket)
         self.forward.clicked.connect(self.forward_notes)
         self.back.clicked.connect(self.back_notes)
         for i, product in enumerate(
@@ -139,7 +139,12 @@ class Basket(QMainWindow):
         self.gridLayout.addWidget(self.labels[-1], self.last_row, 1)
         self.last_row += 1
 
+    def to_collect_order(self):
+        self.collect_order = CollectOrder(self.menu)
+        self.setCentralWidget(self.collect_order)
+
     def show_chosen_menu(self):
+        self.to_menu.clicked.connect(self.to_collect_order)
         for type_of_product in self.menu.keys():
             for i, product in enumerate(self.menu[type_of_product]):
                 for j, proportion in enumerate(product.get_proportion()):
@@ -148,6 +153,7 @@ class Basket(QMainWindow):
                         self.cost += product.take_number_of_proportion(j) * proportion['price']
                         self.show_row(product, proportion, j)
         self.lcdNumber.display(self.cost)
+
 
 
 def get_menu():

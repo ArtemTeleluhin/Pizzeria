@@ -69,6 +69,15 @@ def get_menu(update, context):
     update.message.reply_text('\n'.join(text))
 
 
+def make_order():
+    get_json = get_order_products()
+    global order
+    for key in order.keys():
+        get_json[key] = order[key]
+
+    post('http://127.0.0.1:8080/make_order', json=get_json).json()
+
+
 # добавление информации о пользователе
 # 0
 def name(update, context):
@@ -100,6 +109,59 @@ def get_address(update, context):
     return ConversationHandler.END
 
 
+# Добавление продукта
+# 0
+def get_name_product_info(update, context):
+    update.message.reply_text("Введите id продукта")
+    return 1
+
+
+# 1
+def get_name_product(update, context):
+    global menu
+    current_product = update.message.text
+    for type_of_product in menu.keys():
+        for product, product_id in menu[type_of_product]:
+            # print(product.get_name(), product_id)
+            if current_product == str(product_id):
+                context.user_data['current_product'] = product
+                if len(product.get_proportion()) > 1:
+                    update.message.reply_text(
+                        "Отлично) а теперь номер размерности продукта (указан перед каждой размерностью)")
+                    return 3
+                else:
+                    update.message.reply_text(
+                        "Супер) а теперь количество, которое хотите добавить в заказ." +
+                        " Если продукт был добавлен раньше, укажите его новое количество.")
+                    return 5
+    update.message.reply_text("Такого продукта не нашлось, введите еще раз")
+    return 1
+
+
+# 3
+def get_proportion_product(update, context):
+    context.user_data['current_proportion'] = update.message.text
+    if not context.user_data['current_proportion'].isdigit() or len(
+            context.user_data['current_product'].get_proportion()) < int(context.user_data['current_proportion']):
+        update.message.reply_text("Не понимаю, какую размерность вы имеете ввиду")
+        return 3
+    update.message.reply_text(
+        "Супер) а теперь количество, которое хотите добавить в заказ." +
+        " Если продукт был добавлен раньше, укажите его новое количество.")
+    return 5
+
+
+# 5
+def get_number_product(update, context):
+    val = update.message.text
+    if not val.isdigit():
+        update.message.reply_text("Вы ввели количество, которое я не могу понять(\n Введите одну цифру")
+        return 5
+    context.user_data['current_product'].set_proportion(int(context.user_data['current_proportion']) - 1, val)
+    update.message.reply_text("Готово)")
+    return ConversationHandler.END
+
+
 def main():
     updater = Updater(TOKEN, use_context=True)
     # добавление информации о пользователе
@@ -116,6 +178,18 @@ def main():
         fallbacks=[MessageHandler(Filters.text, get_address)]
     )
     dp.add_handler(user_information)
+
+    # добавление продукта в корзину
+    add_product = ConversationHandler(
+        entry_points=[CommandHandler('add_product', get_name_product_info)],
+        states={
+            1: [MessageHandler(Filters.text, get_name_product, pass_user_data=True)],
+            3: [MessageHandler(Filters.text, get_proportion_product, pass_user_data=True)],
+            5: [MessageHandler(Filters.text, get_number_product, pass_user_data=True)],
+        },
+        fallbacks=[MessageHandler(Filters.text, get_number_product)]
+    )
+    dp.add_handler(add_product)
 
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))

@@ -43,7 +43,7 @@ class Product:
 
 class Order:
     def __init__(self, name, telephone, address, list_of_products, sum_price):
-        print(name, telephone, address, list_of_products, sum_price)
+        #print(name, telephone, address, list_of_products, sum_price)
         self.name = name
         self.telephone = telephone
         self.address = address
@@ -64,14 +64,15 @@ class Order:
                 'count': product.take_number_of_proportion(ind_of_proportion)
             }
             self.json_formatted['order'].append(tmp)
-        self.json_formatted['sum_price'] = self.sum_price
-        self.json_formatted['name'] = self.name
-        self.json_formatted['telephone_number'] = self.telephone
-        self.json_formatted['address'] = self.address
+        if '' not in [self.sum_price, self.name, self.telephone, self.address]:
+            self.json_formatted['sum_price'] = self.sum_price
+            self.json_formatted['name'] = self.name
+            self.json_formatted['telephone_number'] = self.telephone
+            self.json_formatted['address'] = self.address
         return self.json_formatted
 
     def send_order(self):
-        return post('http://127.0.0.1:8080/make_order', json=self.get_json()).json()
+        return (post('http://127.0.0.1:8080/make_order', json=self.get_json()).json())
 
 
 class CollectOrder(QMainWindow):
@@ -222,9 +223,14 @@ class FinishPage(QMainWindow):
     def __init__(self, result):
         super().__init__()
         uic.loadUi('finish_page.ui', self)
+        print(result)
         if result['error'] in ['Nonexistent dish', 'Not sale dish', 'Nonexistent version']:
             self.label.setText('Меню изменилось. Пожалуйста, закажите снова.')
-        self.pushButton.clicked.connect(self.restart)
+            self.pushButton.clicked.connect(self.restart)
+        elif result['error'] != 'OK':
+            self.label.setText('Ошибка при отправке заказа, повторите')
+        elif result['error'] == "OK":
+            self.pushButton.clicked.connect(self.restart)
 
     def restart(self):
         self.ex = CollectOrder(get_menu())

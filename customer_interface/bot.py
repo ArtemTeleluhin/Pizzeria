@@ -69,15 +69,6 @@ def get_menu(update, context):
     update.message.reply_text('\n'.join(text))
 
 
-def make_order():
-    get_json = get_order_products()
-    global order
-    for key in order.keys():
-        get_json[key] = order[key]
-
-    post('http://127.0.0.1:8080/make_order', json=get_json).json()
-
-
 # добавление информации о пользователе
 # 0
 def name(update, context):
@@ -162,6 +153,33 @@ def get_number_product(update, context):
     return ConversationHandler.END
 
 
+def get_order_products():
+    global menu
+    order_products = {'sum_price': 0, 'order': []}
+    print(order_products['sum_price'])
+    for type_of_product in menu.keys():
+        for product, product_id in menu[type_of_product]:
+            for j, proportion in enumerate(product.get_proportion()):
+                if product.take_number_of_proportion(j) != 0:
+                    order_products['order'].append(
+                        {'name': product.get_name(), 'size': proportion['size'], 'price': proportion['price'],
+                         'count': product.take_number_of_proportion(j)})
+                    order_products['sum_price'] += int(
+                        int(product.take_number_of_proportion(j)) * int(proportion['price']))
+    return order_products
+
+
+def show_basket(update, context):
+    text = []
+    for product_info in get_order_products()['order']:
+        string_formatted = []
+        for key in product_info.keys():
+            string_formatted.append(str(product_info[key]))
+        text.append('   '.join(string_formatted))
+    text.append(f"Общая сумма: {get_order_products()['sum_price']}")
+    update.message.reply_text('\n'.join(text))
+
+
 def main():
     updater = Updater(TOKEN, use_context=True)
     # добавление информации о пользователе
@@ -192,6 +210,7 @@ def main():
     dp.add_handler(add_product)
 
     dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("show_basket", show_basket))
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("menu", get_menu))
 

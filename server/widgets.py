@@ -5,6 +5,8 @@ from server.data.versions import Versions
 from server.data.orders import Orders
 from server.data.versions_to_orders import VersionsToOrders
 import sys
+import os
+from PyQt5 import QtCore, QtMultimedia
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QWidget, QListWidgetItem, QTableWidgetItem, QMessageBox
 from server.UI.orders_list import Ui_Form as Ui_orders_list
@@ -16,6 +18,7 @@ from server.UI.version_dialog import Ui_MainWindow as Ui_version_dialog
 from datetime import datetime, timedelta
 
 MAX_PRICE = 10 ** 6
+ADD_ORDER_SOUND = 'add_order.mp3'
 
 
 class OrderWidget(QMainWindow, Ui_order_info):
@@ -82,6 +85,8 @@ class OrdersListWidget(QWidget, Ui_orders_list):
         self.old_orders_id = None
         self.opened_windows = []
 
+        self.load_mp3(os.getcwd() + f'/media/{ADD_ORDER_SOUND}')
+
         self.update_list()
         self.pushButton.clicked.connect(self.show_order)
 
@@ -103,6 +108,9 @@ class OrdersListWidget(QWidget, Ui_orders_list):
             for order in orders:
                 item_text = order.time.strftime('%d.%m.%Y %H:%M') + ', ' + order.address
                 self.ordersList.addItem(OrdersListItem(item_text, order.id))
+            if self.old_orders_id is not None:
+                if new_orders_id - self.old_orders_id:
+                    self.player.play()
             self.old_orders_id = new_orders_id
 
     def show_order(self):
@@ -114,6 +122,12 @@ class OrdersListWidget(QWidget, Ui_orders_list):
                 new_window = OrderWidget(self.db_sess, order)
                 self.opened_windows.append(new_window)
                 new_window.show()
+
+    def load_mp3(self, filename):
+        media = QtCore.QUrl.fromLocalFile(filename)
+        content = QtMultimedia.QMediaContent(media)
+        self.player = QtMultimedia.QMediaPlayer()
+        self.player.setMedia(content)
 
 
 class NotFoundTableElem(Exception):

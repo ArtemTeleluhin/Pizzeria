@@ -208,13 +208,27 @@ class Basket(QMainWindow):
     def send_order(self):
         self.order = Order(self.input_name.displayText(), self.input_telephone.displayText(),
                            self.input_address.displayText(), self.order_products, self.cost)
-        self.order.send_order()
+        self.finish = FinishPage(self.order.send_order())
+        self.setCentralWidget(self.finish)
 
     def buttons_connect(self):
         self.to_menu.clicked.connect(self.to_collect_order)
         self.forward.clicked.connect(self.forward_notes)
         self.back.clicked.connect(self.back_notes)
         self.make_order.clicked.connect(self.send_order)
+
+
+class FinishPage(QMainWindow):
+    def __init__(self, result):
+        super().__init__()
+        uic.loadUi('finish_page.ui', self)
+        if result['error'] in ['Nonexistent dish', 'Not sale dish', 'Nonexistent version']:
+            self.label.setText('Меню изменилось. Пожалуйста, закажите снова.')
+        self.pushButton.clicked.connect(self.restart)
+
+    def restart(self):
+        self.ex = CollectOrder(get_menu())
+        self.setCentralWidget(self.ex)
 
 
 def get_menu():

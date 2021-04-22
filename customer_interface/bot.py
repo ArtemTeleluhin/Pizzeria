@@ -69,11 +69,53 @@ def get_menu(update, context):
     update.message.reply_text('\n'.join(text))
 
 
+# добавление информации о пользователе
+# 0
+def name(update, context):
+    update.message.reply_text('Введите имя')
+    return 1
+
+
+# 1
+def get_name(update, context):
+    global order
+    order['name'] = update.message.text
+    update.message.reply_text('Введите телефон')
+    return 2
+
+
+# 2
+def get_telephone(update, context):
+    global order
+    order['telephone'] = update.message.text
+    update.message.reply_text('Введите адрес')
+    return 3
+
+
+# 3
+def get_address(update, context):
+    global order
+    order['telephone'] = update.message.text
+    update.message.reply_text('Готово)')
+    return ConversationHandler.END
+
+
 def main():
     updater = Updater(TOKEN, use_context=True)
     # добавление информации о пользователе
     # Получаем из него диспетчер сообщений.
     dp = updater.dispatcher
+
+    user_information = ConversationHandler(
+        entry_points=[CommandHandler('user_info', name)],
+        states={
+            1: [MessageHandler(Filters.text, get_name, pass_user_data=True)],
+            2: [MessageHandler(Filters.text, get_telephone, pass_user_data=True)],
+            3: [MessageHandler(Filters.text, get_address, pass_user_data=True)],
+        },
+        fallbacks=[MessageHandler(Filters.text, get_address)]
+    )
+    dp.add_handler(user_information)
 
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))

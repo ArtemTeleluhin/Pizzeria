@@ -5,8 +5,10 @@ from server.data.dishes import Dishes
 from server.data.versions import Versions
 from server.data.orders import Orders
 from server.data.versions_to_orders import VersionsToOrders
+import json
 
 DB_NAME = 'pizzeria_base'
+PIZZERIA_PARAMETERS = 'pizzeria_parameters'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -39,24 +41,27 @@ def menu():
 
 @app.route('/make_order', methods=['POST'])
 def make_order():
+    telephone_number = load_pizzeria_parameters()['telephone_number']
     if not request.json:
-        return jsonify({'error': 'Empty request'})
+        return jsonify({'error': 'Empty request', 'telephone_number': telephone_number})
     for key in ['name', 'telephone_number', 'address', 'sum_price', 'order']:
         if key not in request.json:
-            return jsonify({'error': 'Have not parameter', 'parameter': key})
+            return jsonify({'error': 'Have not parameter',
+                            'parameter': key,
+                            'telephone_number': telephone_number})
     if not request.json['order']:
-        return jsonify({'error': 'Empty order'})
+        return jsonify({'error': 'Empty order', 'telephone_number': telephone_number})
     db_sess = db_session.create_session()
     for dish_dict in request.json['order']:
         dish = db_sess.query(Dishes).filter(Dishes.name == dish_dict['name']).first()
         if not dish:
-            return jsonify({'error': 'Nonexistent dish'})
+            return jsonify({'error': 'Nonexistent dish', 'telephone_number': telephone_number})
         if not dish.is_sale:
-            return jsonify({'error': 'Not sale dish'})
+            return jsonify({'error': 'Not sale dish', 'telephone_number': telephone_number})
         version = db_sess.query(Versions).filter(Versions.dish == dish,
                                                  Versions.size == dish_dict['size']).first()
         if not version:
-            return jsonify({'error': 'Nonexistent version'})
+            return jsonify({'error': 'Nonexistent version', 'telephone_number': telephone_number})
     order = Orders()
     if request.json['name']:
         order.customer_name = request.json['name']
@@ -76,7 +81,19 @@ def make_order():
         versions_to_orders.count = dish_dict['count']
         db_sess.add(versions_to_orders)
         db_sess.commit()
-    return jsonify({'error': 'OK'})
+    return jsonify({'error': 'OK', 'telephone_number': telephone_number})
+
+
+@app.route('/pizzeria_parameters')
+def pizzeria_parameters():
+    data = load_pizzeria_parameters()
+    return jsonify(data)
+
+
+def load_pizzeria_parameters():
+    with open(f'db/{PIZZERIA_PARAMETERS}.json') as file:
+        data = json.load(file)
+        return data
 
 
 if __name__ == '__main__':

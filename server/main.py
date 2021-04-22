@@ -6,6 +6,7 @@ from server.data.versions import Versions
 from server.data.orders import Orders
 from server.data.versions_to_orders import VersionsToOrders
 import json
+import datetime
 
 DB_NAME = 'pizzeria_base'
 PIZZERIA_PARAMETERS = 'pizzeria_parameters'
@@ -41,7 +42,8 @@ def menu():
 
 @app.route('/make_order', methods=['POST'])
 def make_order():
-    telephone_number = load_pizzeria_parameters()['telephone_number']
+    parameters = load_pizzeria_parameters()
+    telephone_number = parameters['telephone_number']
     if not request.json:
         return jsonify({'error': 'Empty request', 'telephone_number': telephone_number})
     for key in ['name', 'telephone_number', 'address', 'sum_price', 'order']:
@@ -62,6 +64,12 @@ def make_order():
                                                  Versions.size == dish_dict['size']).first()
         if not version:
             return jsonify({'error': 'Nonexistent version', 'telephone_number': telephone_number})
+
+    start_time = datetime.datetime.strptime(parameters['start_time'], '%H:%M').time()
+    end_time = datetime.datetime.strptime(parameters['end_time'], '%H:%M').time()
+    if not (start_time <= datetime.datetime.now().time() <= end_time):
+        return jsonify({'error': 'Not working time', **parameters})
+
     order = Orders()
     if request.json['name']:
         order.customer_name = request.json['name']

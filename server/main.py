@@ -7,12 +7,14 @@ from server.data.orders import Orders
 from server.data.versions_to_orders import VersionsToOrders
 import json
 import datetime
+from flask_ngrok import run_with_ngrok
 
 DB_NAME = 'pizzeria_base'
 PIZZERIA_PARAMETERS = 'pizzeria_parameters'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
+run_with_ngrok(app)
 
 
 @app.route('/menu')
@@ -106,4 +108,4 @@ def load_pizzeria_parameters():
 
 if __name__ == '__main__':
     db_session.global_init(f'db/{DB_NAME}.db')
-    app.run(port=8080, host='127.0.0.1', debug=True)
+    app.run()

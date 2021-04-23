@@ -10,7 +10,7 @@ from pprint import pprint
 
 from requests import post
 
-PIZZERIA_ADDRESS = "http://127.0.0.1:8080"
+PIZZERIA_ADDRESS = input().rstrip()  # "http://127.0.0.1:8080"
 NUMBER_OF_CURRENT_NOTES = 6
 
 
@@ -43,7 +43,7 @@ class Product:
 
 class Order:
     def __init__(self, name, telephone, address, list_of_products, sum_price):
-        #print(name, telephone, address, list_of_products, sum_price)
+        # print(name, telephone, address, list_of_products, sum_price)
         self.name = name
         self.telephone = telephone
         self.address = address

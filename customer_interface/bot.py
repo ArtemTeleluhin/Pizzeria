@@ -6,7 +6,7 @@ import requests
 from main import Product
 
 TOKEN = '1721603616:AAG1KPzrBx5ANrIVXwviEneB4kOil-LYAtk'
-PIZZERIA_ADDRESS = "http://127.0.0.1:8080"
+PIZZERIA_ADDRESS = input().rstrip()  # "http://127.0.0.1:8080"
 COMMANDS = ["Мои команды:",
             "/menu - получить меню нашей пиццерии",
             "/user_info - ввести информацию о заказчике (без этого заказ не будет оформлен)",

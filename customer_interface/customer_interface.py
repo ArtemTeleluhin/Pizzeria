@@ -9,41 +9,14 @@ from flask import Flask, jsonify, request
 from pprint import pprint
 
 from requests import post
+from product import Product
 
 PIZZERIA_ADDRESS = input().rstrip()  # "http://127.0.0.1:8080"
 NUMBER_OF_CURRENT_NOTES = 6
 
 
-class Product:
-    def __init__(self, type_of_product, name, proportions, add_info=''):
-        self.type_of_product = type_of_product
-        self.name = name
-        self.proportions = proportions
-        self.add_info = add_info
-        self.number_of_proportion = [0] * len(proportions)
-
-    def set_proportion(self, proportion, val):
-        self.number_of_proportion[proportion] = val
-
-    def get_name(self):
-        return self.name
-
-    def get_add_info(self):
-        return self.add_info
-
-    def get_type(self):
-        return self.type_of_product
-
-    def get_proportion(self):
-        return self.proportions
-
-    def take_number_of_proportion(self, ind):
-        return self.number_of_proportion[ind]
-
-
 class Order:
     def __init__(self, name, telephone, address, list_of_products, sum_price):
-        # print(name, telephone, address, list_of_products, sum_price)
         self.name = name
         self.telephone = telephone
         self.address = address
@@ -72,7 +45,7 @@ class Order:
         return self.json_formatted
 
     def send_order(self):
-        return (post('http://127.0.0.1:8080/make_order', json=self.get_json()).json())
+        return post(f'{PIZZERIA_ADDRESS}/make_order', json=self.get_json()).json()
 
 
 class CollectOrder(QMainWindow):
@@ -84,6 +57,7 @@ class CollectOrder(QMainWindow):
         self.current = 0
         self.menu = menu
         self.start('Всё')
+        self.setFicsetSize(self.size())
 
     def start(self, text, new_type=True):
         if new_type:
@@ -110,13 +84,12 @@ class CollectOrder(QMainWindow):
         self.labels[-1].setText(name)
 
     def new_val(self, val):
-        # print(val)
         self.counts_to_proportion[self.sender()][0].set_proportion(self.counts_to_proportion[self.sender()][1], val)
 
     def new_cnt(self, product, j):
         self.counts.append(QSpinBox(self))
         self.counts_to_proportion[self.counts[-1]] = [product, j]
-        self.counts[-1].setValue(product.take_number_of_proportion(j))
+        self.counts[-1].setValue(int(product.take_number_of_proportion(j)))
         self.counts[-1].valueChanged.connect(self.new_val)
 
     def open_basket(self):
@@ -148,6 +121,7 @@ class CollectOrder(QMainWindow):
                 self.gridLayout_3.addWidget(self.labels[-1], i, 2 * j + 2)
                 self.new_cnt(product, j)
                 self.gridLayout_3.addWidget(self.counts[-1], i, 2 * j + 1)
+        self.setFicsetSize(self.size())
 
 
 class Basket(QMainWindow):
@@ -168,11 +142,11 @@ class Basket(QMainWindow):
                         self.order_products.append([product, proportion, j])
         self.buttons_connect()
         self.show_chosen_menu()
+        self.setFicsetSize(self.size())
 
     def new_lbl(self, name):
         self.labels.append(QLabel(self))
         self.labels[-1].setText(name)
-        # self.labels[-1].move(150, 150)
 
     def forward_notes(self):
         if self.current + NUMBER_OF_CURRENT_NOTES <= len(self.order_products):
@@ -187,7 +161,6 @@ class Basket(QMainWindow):
     def show_row(self, product, proportion, id_proportion):
         self.new_lbl(product.get_name())
         self.gridLayout.addWidget(self.labels[-1], self.last_row, 0)
-        # print(product.take_number_of_proportion(id_proportion))
         self.new_lbl(f" * {str(product.take_number_of_proportion(id_proportion))}")
         self.gridLayout.addWidget(self.labels[-1], self.last_row, 2)
         self.new_lbl(f"{proportion['size']}\n{str(proportion['price'])}руб.")
@@ -223,7 +196,7 @@ class FinishPage(QMainWindow):
     def __init__(self, result):
         super().__init__()
         uic.loadUi('finish_page.ui', self)
-        print(result)
+        self.telephone.setText(result['telephone_number'])
         if result['error'] in ['Nonexistent dish', 'Not sale dish', 'Nonexistent version']:
             self.label.setText('Меню изменилось. Пожалуйста, закажите снова.')
             self.pushButton.clicked.connect(self.restart)
@@ -248,20 +221,16 @@ def get_menu():
             if 'add_info' in product.keys():
                 menu[type_of_product].append(Product(type_of_product,
                                                      product['name'], product['proportions'], product['add_info']))
-                menu['Всё'].append(Product(type_of_product,
-                                           product['name'], product['proportions'], product['add_info']))
+                menu['Всё'].append(menu[type_of_product][-1])
             else:
                 menu[type_of_product].append(Product(type_of_product,
                                                      product['name'], product['proportions']))
-                menu['Всё'].append(Product(type_of_product,
-                                           product['name'], product['proportions']))
+                menu['Всё'].append(menu[type_of_product][-1])
     return menu
 
 
 if __name__ == '__main__':
     appF = QApplication(sys.argv)
-    # app.run(port=8080, host='127.0.0.1', debug=True)
     ex = CollectOrder(get_menu())
-    # print(get_menu())
     ex.show()
     sys.exit(appF.exec())

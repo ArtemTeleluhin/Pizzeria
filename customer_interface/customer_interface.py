@@ -58,7 +58,7 @@ class CollectOrder(QMainWindow):
         self.current = 0
         self.menu = menu
         self.start('Всё')
-        self.setFicsetSize(self.size())
+        self.setFixedSize(self.size())
 
     def start(self, text, new_type=True):
         if new_type:
@@ -121,7 +121,7 @@ class CollectOrder(QMainWindow):
                 self.gridLayout_3.addWidget(self.labels[-1], i, 2 * j + 2)
                 self.new_cnt(product, j)
                 self.gridLayout_3.addWidget(self.counts[-1], i, 2 * j + 1)
-        self.setFicsetSize(self.size())
+        self.setFixedSize(self.size())
 
 
 class Basket(QMainWindow):
@@ -142,7 +142,7 @@ class Basket(QMainWindow):
                         self.order_products.append([product, proportion, j])
         self.buttons_connect()
         self.show_chosen_menu()
-        self.setFicsetSize(self.size())
+        self.setFixedSize(self.size())
 
     def new_lbl(self, name):
         self.labels.append(QLabel(self))
@@ -204,6 +204,7 @@ class FinishPage(QMainWindow):
             self.label.setText('Ошибка при отправке заказа, повторите')
         elif result['error'] == "OK":
             self.pushButton.clicked.connect(self.restart)
+        self.setFixedSize(self.size())
 
     def restart(self):
         self.ex = CollectOrder(get_menu())

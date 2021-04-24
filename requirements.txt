@@ -1,6 +1,0 @@
-Flask==1.1.2
-flask_ngrok==0.0.25
-PyQt5==5.15.1
-requests==2.25.1
-telegram==0.0.1
-sqlalchemy==1.4.6

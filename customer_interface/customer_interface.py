@@ -13,6 +13,7 @@ from product import Product
 
 PIZZERIA_ADDRESS = input().rstrip()  # "http://127.0.0.1:8080"
 NUMBER_OF_CURRENT_NOTES = 6
+START_TEXT = 'Всё'
 
 
 class Order:
@@ -66,7 +67,7 @@ class CollectOrder(QMainWindow):
         unique_types = set()
         self.comboBox.addItem(text)
         unique_types.add(text)
-        unique_types.add('Всё')
+        unique_types.add(START_TEXT)
         for type_of_product in self.menu.keys():
             for product in self.menu[type_of_product]:
                 unique_types.add(product.get_type())
@@ -107,7 +108,6 @@ class CollectOrder(QMainWindow):
             self.start(self.comboBox.currentText(), False)
 
     def initUI(self):
-        self.setWindowTitle('Главная форма')
         self.Basket.clicked.connect(self.open_basket)
         self.forward.clicked.connect(self.forward_notes)
         self.back.clicked.connect(self.back_notes)

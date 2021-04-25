@@ -1,9 +1,9 @@
 # Импортируем необходимые классы.
 from requests import post
 from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
-from telegram.ext import CallbackContext, CommandHandler
+from telegram.ext import CommandHandler
 import requests
-from main import Product
+from product import Product
 
 TOKEN = '1721603616:AAG1KPzrBx5ANrIVXwviEneB4kOil-LYAtk'
 PIZZERIA_ADDRESS = input().rstrip()  # "http://127.0.0.1:8080"
@@ -33,17 +33,28 @@ menu = {}
 
 
 def start(update, context):
-    global order, menu
-    if update.message.chat_id not in order.keys():
-        order[update.message.chat_id] = {'name': None,
-                                         'telephone_number': None,
-                                         'address': None}
-        menu[update.message.chat_id] = {}
+    print('start')
     update.message.reply_text("Привет! Я бот, помогающий сделать заказ в пиццерию.\n" + '\n'.join(COMMANDS))
 
 
 def help(update, context):
     update.message.reply_text('\n'.join(COMMANDS))
+
+
+def make_order(update, context):
+    get_json = get_order_products(update)
+    global order
+    for key in order[update.message.chat_id].keys():
+        get_json[key] = order[update.message.chat_id][key]
+    result = post(f'{PIZZERIA_ADDRESS}/make_order', json=get_json).json()
+    if result['error'] in ['Nonexistent dish', 'Not sale dish', 'Nonexistent version']:
+        update.message.reply_text("Меню изменилось. Пожалуйста, закажите снова")
+    elif result['error'] == 'Empty order':
+        update.message.reply_text("Не выбрано никаких блюд. Невозможно сделать заказ")
+    elif result['error'] == 'Have not parameter':
+        update.message.reply_text("Не заполнена информация о заказчике. Пожалуйста, заполните ее и повторите попытку")
+    elif result['error'] == 'OK':
+        update.message.reply_text("Заказ успешно получен)")
 
 
 def get_menu(update, context):
@@ -74,22 +85,6 @@ def get_menu(update, context):
             text.append(f"id: {cnt - 1}   " + cur_product.output_format())
 
     update.message.reply_text('\n'.join(text))
-
-
-def make_order(update, context):
-    get_json = get_order_products(update)
-    global order
-    for key in order[update.message.chat_id].keys():
-        get_json[key] = order[update.message.chat_id][key]
-    result = post('http://127.0.0.1:8080/make_order', json=get_json).json()
-    if result['error'] in ['Nonexistent dish', 'Not sale dish', 'Nonexistent version']:
-        update.message.reply_text("Меню изменилось. Пожалуйста, закажите снова")
-    elif result['error'] == 'Empty order':
-        update.message.reply_text("Не выбрано никаких блюд. Невозможно сделать заказ")
-    elif result['error'] == 'Have not parameter':
-        update.message.reply_text("Не заполнена информация о заказчике. Пожалуйста, заполните ее и повторите попытку")
-    elif result['error'] == 'OK':
-        update.message.reply_text("Заказ успешно получен)")
 
 
 # добавление информации о пользователе
@@ -136,7 +131,6 @@ def get_name_product(update, context):
     current_product = update.message.text
     for type_of_product in menu[update.message.chat_id].keys():
         for product, product_id in menu[update.message.chat_id][type_of_product]:
-            # print(product.get_name(), product_id)
             if current_product == str(product_id):
                 context.user_data['current_product'] = product
                 if len(product.get_proportion()) > 1:
@@ -144,6 +138,7 @@ def get_name_product(update, context):
                         "Отлично) а теперь номер размерности продукта (указан перед каждой размерностью)")
                     return 3
                 else:
+                    context.user_data['current_proportion'] = 1
                     update.message.reply_text(
                         "Супер) а теперь количество, которое хотите добавить в заказ." +
                         " Если продукт был добавлен раньше, укажите его новое количество.")
@@ -207,10 +202,9 @@ def show_basket(update, context):
 
 def main():
     updater = Updater(TOKEN, use_context=True)
-    # добавление информации о пользователе
-    # Получаем из него диспетчер сообщений.
     dp = updater.dispatcher
 
+    # добавление информации о пользователе
     user_information = ConversationHandler(
         entry_points=[CommandHandler('user_info', name)],
         states={

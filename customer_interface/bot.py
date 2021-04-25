@@ -12,7 +12,8 @@ COMMANDS = ["Мои команды:",
             "/user_info - ввести информацию о заказчике (без этого заказ не будет оформлен)",
             "/add_product - добавить продукт в корзину",
             "/show_basket - показать выбранные продукты",
-            "/order - сделать заказ (предварительно нужно ввести имя, телефон и адрес доставки)"]
+            "/order - сделать заказ (предварительно нужно ввести имя, телефон и адрес доставки)",
+            "/clean_basket - очистить корзину"]
 
 
 class BotProduct(Product):
@@ -48,8 +49,11 @@ def make_order(update, context):
     global order
     for key in order[update.message.chat_id].keys():
         get_json[key] = order[update.message.chat_id][key]
-    result = post(f'{PIZZERIA_ADDRESS}/make_order', json=get_json)
-    print(result.content)
+    get_json_without_none = {}
+    for key in get_json.keys():
+        if get_json[key]:
+            get_json_without_none[key] = get_json[key]
+    result = post(f'{PIZZERIA_ADDRESS}/make_order', json=get_json_without_none)
     result = result.json()
     if result['error'] in ['Nonexistent dish', 'Not sale dish', 'Nonexistent version']:
         update.message.reply_text("Меню изменилось. Пожалуйста, закажите снова")
@@ -59,17 +63,23 @@ def make_order(update, context):
         update.message.reply_text("Не заполнена информация о заказчике. Пожалуйста, заполните ее и повторите попытку")
     elif result['error'] == 'OK':
         update.message.reply_text("Заказ успешно получен)")
+        order[update.message.chat_id] = {'name': None,
+                                         'telephone_number': None,
+                                         'address': None}
+        clean_basket(update, context)
 
 
-def menu_request(update, context):
+def menu_request(update, context, need_new_menu=False):
     global menu, order
-    if update.message.chat_id in order.keys():
+    if update.message.chat_id in order.keys() and not need_new_menu:
         return
-    order[update.message.chat_id] = {'name': None,
-                                     'telephone_number': None,
-                                     'address': None}
+    if not need_new_menu:
+        order[update.message.chat_id] = {'name': None,
+                                         'telephone_number': None,
+                                         'address': None}
     menu[update.message.chat_id] = {}
     response = requests.get(f'{PIZZERIA_ADDRESS}/menu')
+    print(response)
     json_response = response.json()
     cnt = 0
     for type_of_product in json_response.keys():
@@ -86,25 +96,14 @@ def menu_request(update, context):
 
 
 def get_menu(update, context):
-    response = requests.get(f'{PIZZERIA_ADDRESS}/menu')
-    json_response = response.json()
+    menu_request(update, context)
     text = []
-
-    cnt = 0
-    for type_of_product in json_response.keys():
+    for type_of_product in menu[update.message.chat_id]:
         text.append('')
         text.append(type_of_product)
-        menu[update.message.chat_id][type_of_product] = []
-        for product in json_response[type_of_product]:
-            if 'add_info' in product.keys():
-                cur_product = BotProduct(type_of_product,
-                                         product['name'], product['proportions'], product['add_info'])
-            else:
-                cur_product = BotProduct(type_of_product,
-                                         product['name'], product['proportions'])
-            menu[update.message.chat_id][type_of_product].append((cur_product, cnt))
-            cnt += 1
-            text.append(f"id: {cnt - 1}   " + cur_product.output_format())
+        for product_inf in menu[update.message.chat_id][type_of_product]:
+            product, cnt = product_inf
+            text.append(f"id: {cnt - 1}   " + product.output_format())
 
     update.message.reply_text('\n'.join(text))
 
@@ -127,7 +126,7 @@ def get_name(update, context):
 # 2
 def get_telephone(update, context):
     global order
-    order[update.message.chat_id]['telephone'] = update.message.text
+    order[update.message.chat_id]['telephone_number'] = update.message.text
     update.message.reply_text('Введите адрес')
     return 3
 
@@ -135,7 +134,7 @@ def get_telephone(update, context):
 # 3
 def get_address(update, context):
     global order
-    order[update.message.chat_id]['telephone'] = update.message.text
+    order[update.message.chat_id]['address'] = update.message.text
     update.message.reply_text('Готово)')
     return ConversationHandler.END
 
@@ -201,7 +200,7 @@ def get_order_products(update):
         for product, product_id in menu[update.message.chat_id][type_of_product]:
             for j, proportion in enumerate(product.get_proportion()):
                 if product.take_number_of_proportion(j) != 0:
-                    if 'order' not in menu[update.message.chat_id].keys():
+                    if 'order' not in order_products.keys():
                         order_products['order'] = []
                     order_products['order'].append(
                         {'name': product.get_name(), 'size': proportion['size'], 'price': proportion['price'],
@@ -224,6 +223,11 @@ def show_basket(update, context):
         text.append('   '.join(string_formatted))
     text.append(f"Общая сумма: {get_order_products(update)['sum_price']}")
     update.message.reply_text('\n'.join(text))
+
+
+def clean_basket(update, context):
+    menu_request(update, context, True)
+    update.message.reply_text('Заказ сброшен')
 
 
 def main():
@@ -259,6 +263,7 @@ def main():
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("menu", get_menu))
     dp.add_handler(CommandHandler("order", make_order))
+    dp.add_handler(CommandHandler("clean_basket", clean_basket))
 
     updater.start_polling()
 

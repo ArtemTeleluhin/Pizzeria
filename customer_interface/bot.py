@@ -57,7 +57,8 @@ def make_order(update, context):
     result = result.json()
     if result['error'] in ['Nonexistent dish', 'Not sale dish', 'Nonexistent version']:
         update.message.reply_text("Меню изменилось. Пожалуйста, закажите снова")
-    elif result['error'] == 'Empty order':
+    elif result['error'] == 'Empty request' or (
+            result['error'] == 'Have not parameter' and result['parameter'] == 'order'):
         update.message.reply_text("Не выбрано никаких блюд. Невозможно сделать заказ")
     elif result['error'] == 'Have not parameter':
         update.message.reply_text("Не заполнена информация о заказчике. Пожалуйста, заполните ее и повторите попытку")
@@ -199,7 +200,7 @@ def get_order_products(update):
     for type_of_product in menu[update.message.chat_id].keys():
         for product, product_id in menu[update.message.chat_id][type_of_product]:
             for j, proportion in enumerate(product.get_proportion()):
-                if product.take_number_of_proportion(j) != 0:
+                if int(product.take_number_of_proportion(j)) != 0:
                     if 'order' not in order_products.keys():
                         order_products['order'] = []
                     order_products['order'].append(

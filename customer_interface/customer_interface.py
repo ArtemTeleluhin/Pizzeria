@@ -202,8 +202,7 @@ class FinishPage(QMainWindow):
             self.pushButton.clicked.connect(self.restart)
         elif result['error'] != 'OK':
             self.label.setText('Ошибка при отправке заказа, повторите')
-        elif result['error'] == "OK":
-            self.pushButton.clicked.connect(self.restart)
+        self.pushButton.clicked.connect(self.restart)
         self.setFixedSize(self.size())
 
     def restart(self):

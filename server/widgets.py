@@ -49,7 +49,8 @@ class OrderWidget(QMainWindow, Ui_order_info):
 
         for con in order.con_versions:
             version = con.version
-            version_text = f'{version.dish.name}, {version.size}, {int(version.price)}'
+            version_text = \
+                f'{version.dish.name}, {version.size}, {int(version.price)} - {int(con.count)}'
             self.orderList.addItem(QListWidgetItem(version_text))
 
         if order.is_done:

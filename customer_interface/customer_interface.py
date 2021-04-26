@@ -134,8 +134,7 @@ class Basket(QMainWindow):
         self.cost = 0
         self.current = 0
         self.order_products = []
-        for type_of_product in self.menu.keys():
-            for i, product in enumerate(self.menu[type_of_product]):
+        for i, product in enumerate(self.menu[START_TEXT]):
                 for j, proportion in enumerate(product.get_proportion()):
                     if product.take_number_of_proportion(j) != 0:
                         self.cost += product.take_number_of_proportion(j) * proportion['price']

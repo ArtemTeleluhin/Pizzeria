@@ -3,7 +3,7 @@ from requests import post
 from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
 from telegram.ext import CommandHandler
 import requests
-from customer_interface.product import Product
+from product import Product
 
 TOKEN = '1721603616:AAG1KPzrBx5ANrIVXwviEneB4kOil-LYAtk'
 PIZZERIA_ADDRESS = input().rstrip()  # "http://127.0.0.1:8080"

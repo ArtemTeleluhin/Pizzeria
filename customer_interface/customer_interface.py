@@ -9,7 +9,7 @@ from flask import Flask, jsonify, request
 from pprint import pprint
 
 from requests import post
-from customer_interface.product import Product
+from product import Product
 
 PIZZERIA_ADDRESS = input().rstrip()  # "http://127.0.0.1:8080"
 NUMBER_OF_CURRENT_NOTES = 6

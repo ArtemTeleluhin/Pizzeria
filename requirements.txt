@@ -4,3 +4,4 @@ PyQt5==5.15.1
 requests==2.25.1
 telegram==0.0.1
 sqlalchemy==1.4.6
+python-telegram-bot==13.5
